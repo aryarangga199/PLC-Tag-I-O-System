@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLC TAG I/O - Ares Teknik</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { 
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    animation: {
+                        'gradient-slow': 'gradient-slow 15s ease infinite',
+                        'shimmer': 'shimmer 4s infinite linear',
+                    },
+                    keyframes: {
+                        'gradient-slow': {
+                            '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+                            '50%': { 'background-size': '200% 200%', 'background-position': 'right center' }
+                        },
+                        'shimmer': {
+                            '0%': { 'background-position': '-200% 0' },
+                            '100%': { 'background-position': '200% 0' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+        
+        .animated-bg {
+            background-size: 400% 400%;
+            animation: gradient-slow 15s ease infinite;
+        }
+        /* Background Adaptif Persis Acuan */
+        html.dark body.animated-bg { background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #171717); }
+        html.light body.animated-bg { background: linear-gradient(-45deg, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
+
+        /* Glassmorphism Persis Acuan */
+        .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        html.dark .glass { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); }
+        html.light .glass { background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 8px 32px rgba(0,0,0,0.03); }
+
+        .shimmer-text {
+            background: linear-gradient(90deg, #3b82f6, #10b981, #6366f1, #3b82f6);
+            background-size: 300% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 5s linear infinite;
+        }
+
+        .machine-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .machine-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px -15px rgba(59, 130, 246, 0.3);
+        }
+
+        .card-animate { animation: slideUp 0.6s ease-out forwards; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="animated-bg dark text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-500 font-sans overflow-x-hidden">
+
+    <div id="login-overlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl p-4 transition-all">
+        <button onclick="toggleTheme()" class="absolute top-6 right-6 p-3 glass rounded-full hover:scale-110 transition-transform">🌓</button>
+        
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group border border-slate-200 dark:border-slate-700">
+            <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl transition-all"></div>
+            
+            <div class="text-center mb-8 relative">
+                <div class="w-20 h-20 bg-blue-600 dark:bg-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-500/40 rotate-3 group-hover:rotate-12 transition-all duration-500">
+                    <span class="text-4xl text-white">⚙️</span>
+                </div>
+                <h2 class="text-2xl font-extrabold tracking-tight text-slate-800 dark:text-white uppercase">PLC TAG I/O Login</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-[10px] mt-2 uppercase tracking-[0.2em] font-bold">system by: Arya Rangga</p>
+            </div>
+            
+            <div class="space-y-4 relative">
+                <input type="text" id="userLogin" placeholder="Username" class="w-full bg-slate-100 dark:bg-slate-900/50 p-4 rounded-2xl outline-none ring-blue-500/40 focus:ring-4 border border-slate-200 dark:border-white/5 transition-all text-sm text-slate-900 dark:text-white font-semibold">
+                <input type="password" id="passLogin" placeholder="Password" class="w-full bg-slate-100 dark:bg-slate-900/50 p-4 rounded-2xl outline-none ring-blue-500/40 focus:ring-4 border border-slate-200 dark:border-white/5 transition-all text-sm text-slate-900 dark:text-white font-semibold">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-bold uppercase tracking-[0.2em] shadow-lg shadow-blue-500/40 transition-all active:scale-95">Enter System</button>
+                <p id="loginError" class="text-red-500 text-center text-xs font-bold hidden animate-bounce">Akses Ditolak!</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content" class="hidden max-w-6xl mx-auto p-6 md:p-12 relative">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-8">
+            <div class="space-y-2">
+                <h1 class="text-4xl md:text-5xl font-black shimmer-text tracking-tighter">PLC TAG I/O SYSTEM</h1>
+                <div class="flex items-center gap-3">
+                    <span class="h-1 w-12 bg-blue-500 rounded-full"></span>
+                    <p class="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.3em]">Digital Archive PLC ARES TEKNIK</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <button onclick="openUploadModal()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black tracking-widest transition-all shadow-lg active:scale-95">+ UPLOAD DATA</button>
+                <button onclick="toggleTheme()" class="px-6 py-3 glass rounded-2xl text-[10px] font-black tracking-widest transition-all active:scale-95 text-slate-800 dark:text-white">🌓 MODE</button>
+                <button onclick="handleLogout()" class="px-6 py-3 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Logout</button>
+            </div>
+        </header>
+
+        <div class="glass p-3 rounded-[2.5rem] mb-12 border border-slate-200 dark:border-white/5">
+            <div class="relative group">
+                <input type="text" id="searchInput" onkeyup="filterData()" placeholder="Cari mesin atau alamat I/O..." 
+                    class="w-full bg-white dark:bg-slate-950/40 p-5 pl-14 rounded-[1.8rem] outline-none text-sm font-bold border border-slate-200 dark:border-transparent focus:border-blue-500 transition-all text-slate-800 dark:text-white">
+                <span class="absolute left-6 top-5 opacity-40 text-xl group-focus-within:opacity-100 transition-opacity">🔍</span>
+            </div>
+        </div>
+
+        <div id="slider" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
+            <div class="col-span-full text-center py-24 glass rounded-[3rem]">
+                <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 mb-6"></div>
+                <p class="text-slate-500 dark:text-slate-400 font-bold tracking-widest text-xs uppercase animate-pulse">Syncing Database...</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="viewTagModal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-4xl p-10 rounded-[3rem] shadow-2xl relative border border-slate-200 dark:border-slate-800">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h2 id="modalMachineTitle" class="text-2xl font-black text-blue-600 italic uppercase"></h2>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Live Database</p>
+                </div>
+                <button onclick="closeModal('viewTagModal')" class="p-3 glass rounded-full hover:rotate-90 transition-transform">✕</button>
+            </div>
+            
+            <div class="max-h-[400px] overflow-y-auto custom-scrollbar pr-4">
+                <table class="w-full text-left">
+                    <thead class="sticky top-0 bg-white dark:bg-slate-900">
+                        <tr class="text-[10px] uppercase font-black text-slate-400 border-b border-slate-100 dark:border-slate-800">
+                            <th class="p-4">Address</th>
+                            <th class="p-4">Function</th>
+                            <th class="p-4 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tagTableBody" class="divide-y divide-slate-100 dark:divide-slate-800"></tbody>
+                </table>
+            </div>
+            
+            <div class="mt-8 flex justify-end">
+                 <button id="deleteMachineBtn" class="px-6 py-3 bg-red-500/10 text-red-500 text-[10px] font-black rounded-xl hover:bg-red-500 hover:text-white transition-all uppercase">Hapus Mesin</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="uploadModal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
+        <div class="bg-white dark:bg-slate-800 w-full max-w-md p-10 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-700">
+            <h2 class="text-xl font-extrabold mb-8 flex items-center text-slate-800 dark:text-white"><span class="mr-4 p-3 bg-blue-500/10 rounded-2xl">📤</span> Upload Data</h2>
+            
+            <div class="flex gap-2 mb-6 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-2xl">
+                <button onclick="switchTab('tag')" id="tabTag" class="flex-1 py-3 rounded-xl text-[10px] font-black transition-all bg-blue-600 text-white">ADD TAG</button>
+                <button onclick="switchTab('machine')" id="tabMachine" class="flex-1 py-3 rounded-xl text-[10px] font-black transition-all text-slate-500">ADD MACHINE</button>
+            </div>
+
+            <div id="formTag" class="space-y-4">
+                <select id="selectMachine" class="w-full bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl outline-none text-sm font-bold border border-slate-200 dark:border-white/5 text-slate-800 dark:text-white"></select>
+                <div id="tagInputList" class="space-y-2">
+                    <div class="flex gap-2 tag-row">
+                        <input type="text" placeholder="%I0.00" class="addr-in w-1/3 bg-slate-100 dark:bg-slate-900 p-3 rounded-xl text-xs font-bold outline-none border border-slate-200 dark:border-white/5 text-slate-800 dark:text-white">
+                        <input type="text" placeholder="Function" class="func-in w-2/3 bg-slate-100 dark:bg-slate-900 p-3 rounded-xl text-xs font-bold outline-none border border-slate-200 dark:border-white/5 text-slate-800 dark:text-white">
+                    </div>
+                </div>
+                <button onclick="addRow()" class="text-[10px] font-black text-blue-500 uppercase tracking-widest">+ Add Row</button>
+            </div>
+
+            <div id="formMachine" class="hidden space-y-4">
+                <input type="text" id="newMachineName" placeholder="Nama Mesin" class="w-full bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl outline-none text-sm font-bold border border-slate-200 dark:border-white/5 text-slate-800 dark:text-white">
+                <div class="relative group h-32 w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/30 overflow-hidden">
+                    <input type="file" id="machineImg" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="handleFileSelect(event)">
+                    <p id="fileLabel" class="text-[10px] font-black text-slate-400 uppercase">Klik Upload Image</p>
+                    <img id="preview" class="hidden h-full w-full object-contain p-2">
+                </div>
+            </div>
+
+            <div class="flex gap-4 pt-8">
+                <button onclick="closeModal('uploadModal')" class="flex-1 py-4 rounded-2xl font-black bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-white text-[10px] uppercase">Batal</button>
+                <button onclick="submitData()" id="btnSave" class="flex-1 py-4 rounded-2xl font-black bg-blue-600 text-white text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbwtP1Pup8Ob1yCjNVd6rpkhFlxkgLnzapP53Sq8s-BM2cgYaUhFklJpwGnbw8C2_2Y6/exec";
+        let GLOBAL_DATA = [];
+        let base64Image = "";
+
+        // AUTH & THEME
+        function toggleTheme() {
+            const html = document.documentElement;
+            const body = document.body;
+            if (html.classList.contains('dark')) {
+                html.classList.replace('dark', 'light');
+                body.classList.replace('dark', 'light');
+            } else {
+                html.classList.replace('light', 'dark');
+                body.classList.replace('light', 'dark');
+            }
+        }
+
+        function handleLogin() {
+            const u = document.getElementById('userLogin').value;
+            const p = document.getElementById('passLogin').value;
+            if(u === "aresteknik" && p === "aresteknik") {
+                sessionStorage.setItem("ares_auth", "true");
+                showApp();
+            } else {
+                const err = document.getElementById('loginError');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 2000);
+            }
+        }
+
+        function showApp() {
+            document.getElementById('login-overlay').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+            fetchFromDrive();
+        }
+
+        function handleLogout() { sessionStorage.removeItem("ares_auth"); location.reload(); }
+
+        // FETCH DATA
+        async function fetchFromDrive() {
+            try {
+                const response = await fetch(API_URL);
+                GLOBAL_DATA = await response.json();
+                renderDashboard(GLOBAL_DATA);
+            } catch (e) {
+                document.getElementById('slider').innerHTML = `<div class='col-span-full p-10 text-center text-red-500 font-bold glass'>⚠️ Gagal Sinkronisasi Cloud.</div>`;
+            }
+        }
+
+        function renderDashboard(data) {
+            const slider = document.getElementById('slider');
+            slider.innerHTML = data.map(m => `
+                <div class="machine-card card-animate glass p-6 rounded-[2.5rem] flex flex-col items-center group">
+                    <div class="w-full h-44 rounded-3xl overflow-hidden mb-6 bg-slate-100 dark:bg-slate-900 flex items-center justify-center border border-slate-200 dark:border-white/5">
+                        <img src="${m.imgUrl || 'https://via.placeholder.com/400x300?text=No+Image'}" class="w-full h-full object-cover">
+                    </div>
+                    <h3 class="font-black text-lg uppercase mb-6 tracking-tighter text-slate-800 dark:text-white">${m.name}</h3>
+                    <div class="flex gap-2 w-full">
+                        <button onclick="viewTags('${m.id}')" class="flex-1 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg transition-all">VIEW TAGS</button>
+                        <button onclick="exportExcel('${m.id}')" class="px-5 py-4 glass rounded-2xl hover:text-blue-500 transition-all">📊</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewTags(machineId) {
+            const machine = GLOBAL_DATA.find(m => m.id === machineId);
+            document.getElementById('modalMachineTitle').innerText = machine.name;
+            const tbody = document.getElementById('tagTableBody');
+            
+            document.getElementById('deleteMachineBtn').onclick = () => deleteMachine(machineId, machine.name);
+
+            tbody.innerHTML = machine.tags.length ? machine.tags.map(t => `
+                <tr class="text-slate-700 dark:text-slate-300">
+                    <td class="p-4 font-bold text-blue-600 dark:text-blue-400 italic text-[10px]">${t.address}</td>
+                    <td class="p-4 uppercase font-bold text-slate-800 dark:text-slate-100 text-[10px]">${t.func}</td>
+                    <td class="p-4 text-right">
+                        <button onclick="deleteTag('${machineId}', '${t.id}')" class="text-red-400 hover:text-red-500">🗑️</button>
+                    </td>
+                </tr>
+            `).join('') : `<tr><td colspan="3" class="p-10 text-center opacity-30 italic text-[10px]">No Tags Found.</td></tr>`;
+            
+            document.getElementById('viewTagModal').classList.remove('hidden');
+        }
+
+        async function deleteMachine(mId, mName) {
+            if (!confirm(`Hapus mesin "${mName}"?`)) return;
+            await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "deleteMachine", machineFileId: mId }) });
+            location.reload();
+        }
+
+        async function deleteTag(mId, tId) {
+            if (!confirm("Hapus tag ini?")) return;
+            await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "deleteTag", machineFileId: mId, tagId: tId }) });
+            location.reload();
+        }
+
+        function filterData() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = GLOBAL_DATA.filter(m => m.name.toLowerCase().includes(q) || m.tags.some(t => t.address.toLowerCase().includes(q) || t.func.toLowerCase().includes(q)));
+            renderDashboard(filtered);
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                base64Image = event.target.result;
+                const preview = document.getElementById('preview');
+                preview.src = base64Image;
+                preview.classList.remove('hidden');
+                document.getElementById('fileLabel').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addRow() {
+            const row = document.createElement('div');
+            row.className = "flex gap-2 tag-row mt-2";
+            row.innerHTML = `
+                <input type="text" placeholder="%I0.00" class="addr-in w-1/3 bg-slate-100 dark:bg-slate-900 p-3 rounded-xl text-xs font-bold outline-none border border-slate-200 dark:border-white/5 text-slate-800 dark:text-white">
+                <input type="text" placeholder="Function" class="func-in w-2/3 bg-slate-100 dark:bg-slate-900 p-3 rounded-xl text-xs font-bold outline-none border border-slate-200 dark:border-white/5 text-slate-800 dark:text-white">
+            `;
+            document.getElementById('tagInputList').appendChild(row);
+        }
+
+        async function submitData() {
+            const btn = document.getElementById('btnSave');
+            btn.disabled = true; btn.innerText = "PROCESSING...";
+            const isMachine = !document.getElementById('formMachine').classList.contains('hidden');
+            let payload = { action: isMachine ? "addMachine" : "addTags" };
+
+            if (isMachine) {
+                payload.machineName = document.getElementById('newMachineName').value;
+                payload.imageBtn = base64Image;
+            } else {
+                payload.machineFileId = document.getElementById('selectMachine').value;
+                payload.tags = Array.from(document.querySelectorAll('.tag-row')).map(r => ({
+                    address: r.querySelector('.addr-in').value,
+                    func: r.querySelector('.func-in').value
+                })).filter(t => t.address !== "");
+            }
+
+            try {
+                await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
+                location.reload();
+            } catch (e) { alert("Error!"); btn.disabled = false; btn.innerText = "RETRY"; }
+        }
+
+        function switchTab(type) {
+            const isTag = type === 'tag';
+            document.getElementById('formTag').classList.toggle('hidden', !isTag);
+            document.getElementById('formMachine').classList.toggle('hidden', isTag);
+            document.getElementById('tabTag').className = isTag ? "flex-1 py-3 rounded-xl text-[10px] font-black bg-blue-600 text-white shadow-lg" : "flex-1 py-3 rounded-xl text-[10px] font-black text-slate-500";
+            document.getElementById('tabMachine').className = !isTag ? "flex-1 py-3 rounded-xl text-[10px] font-black bg-blue-600 text-white shadow-lg" : "flex-1 py-3 rounded-xl text-[10px] font-black text-slate-500";
+        }
+
+        function openUploadModal() {
+            document.getElementById('selectMachine').innerHTML = GLOBAL_DATA.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function exportExcel(id) { window.open(`https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`); }
+
+        window.onload = () => { if(sessionStorage.getItem("ares_auth") === "true") showApp(); }
+    </script>
+</body>
+</html>
