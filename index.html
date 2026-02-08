@@ -263,7 +263,14 @@
             
             document.getElementById('deleteMachineBtn').onclick = () => deleteMachine(machineId, machine.name);
 
-            tbody.innerHTML = machine.tags.length ? machine.tags.map(t => `
+            const sortedTags = [...machine.tags].sort((a, b) => {
+                return a.address.localeCompare(b.address, undefined, {
+                    numeric: true,
+                    sensitivity: 'base'
+                });
+            });
+
+            tbody.innerHTML = sortedTags.length ? sortedTags.map(t => `
                 <tr class="text-slate-700 dark:text-slate-300">
                     <td class="p-4 font-bold text-blue-600 dark:text-blue-400 italic text-[10px]">${t.address}</td>
                     <td class="p-4 uppercase font-bold text-slate-800 dark:text-slate-100 text-[10px]">${t.func}</td>
