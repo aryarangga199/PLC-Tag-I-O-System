@@ -38,11 +38,9 @@
             background-size: 400% 400%;
             animation: gradient-slow 15s ease infinite;
         }
-        /* Background Adaptif Persis Acuan */
         html.dark body.animated-bg { background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #171717); }
         html.light body.animated-bg { background: linear-gradient(-45deg, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc); }
 
-        /* Glassmorphism Persis Acuan */
         .glass { backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         html.dark .glass { background: rgba(30, 41, 59, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); }
         html.light .glass { background: rgba(255, 255, 255, 0.7); border: 1px solid rgba(0, 0, 0, 0.05); box-shadow: 0 8px 32px rgba(0,0,0,0.03); }
@@ -72,10 +70,8 @@
 
     <div id="login-overlay" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 dark:bg-slate-950/95 backdrop-blur-2xl p-4 transition-all">
         <button onclick="toggleTheme()" class="absolute top-6 right-6 p-3 glass rounded-full hover:scale-110 transition-transform">🌓</button>
-        
         <div class="bg-white dark:bg-slate-800 w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden group border border-slate-200 dark:border-slate-700">
             <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-600/10 rounded-full blur-3xl transition-all"></div>
-            
             <div class="text-center mb-8 relative">
                 <div class="w-20 h-20 bg-blue-600 dark:bg-blue-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-blue-500/40 rotate-3 group-hover:rotate-12 transition-all duration-500">
                     <span class="text-4xl text-white">⚙️</span>
@@ -83,7 +79,6 @@
                 <h2 class="text-2xl font-extrabold tracking-tight text-slate-800 dark:text-white uppercase">PLC TAG I/O Login</h2>
                 <p class="text-slate-500 dark:text-slate-400 text-[10px] mt-2 uppercase tracking-[0.2em] font-bold">system by: Arya Rangga</p>
             </div>
-            
             <div class="space-y-4 relative">
                 <input type="text" id="userLogin" placeholder="Username" class="w-full bg-slate-100 dark:bg-slate-900/50 p-4 rounded-2xl outline-none ring-blue-500/40 focus:ring-4 border border-slate-200 dark:border-white/5 transition-all text-sm text-slate-900 dark:text-white font-semibold">
                 <input type="password" id="passLogin" placeholder="Password" class="w-full bg-slate-100 dark:bg-slate-900/50 p-4 rounded-2xl outline-none ring-blue-500/40 focus:ring-4 border border-slate-200 dark:border-white/5 transition-all text-sm text-slate-900 dark:text-white font-semibold">
@@ -109,14 +104,6 @@
             </div>
         </header>
 
-        <div class="glass p-3 rounded-[2.5rem] mb-12 border border-slate-200 dark:border-white/5">
-            <div class="relative group">
-                <input type="text" id="searchInput" onkeyup="filterData()" placeholder="Cari mesin atau alamat I/O..." 
-                    class="w-full bg-white dark:bg-slate-950/40 p-5 pl-14 rounded-[1.8rem] outline-none text-sm font-bold border border-slate-200 dark:border-transparent focus:border-blue-500 transition-all text-slate-800 dark:text-white">
-                <span class="absolute left-6 top-5 opacity-40 text-xl group-focus-within:opacity-100 transition-opacity">🔍</span>
-            </div>
-        </div>
-
         <div id="slider" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20">
             <div class="col-span-full text-center py-24 glass rounded-[3rem]">
                 <div class="inline-block animate-spin rounded-full h-10 w-10 border-t-4 border-blue-500 mb-6"></div>
@@ -127,17 +114,22 @@
 
     <div id="viewTagModal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
         <div class="bg-white dark:bg-slate-900 w-full max-w-4xl p-10 rounded-[3rem] shadow-2xl relative border border-slate-200 dark:border-slate-800">
-            <div class="flex justify-between items-start mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
                     <h2 id="modalMachineTitle" class="text-2xl font-black text-blue-600 italic uppercase"></h2>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Live Database</p>
                 </div>
-                <button onclick="closeModal('viewTagModal')" class="p-3 glass rounded-full hover:rotate-90 transition-transform">✕</button>
+                <div class="relative w-full md:w-64">
+                    <input type="text" id="tagSearchInput" onkeyup="filterTagsInternal()" placeholder="Cari Alamat atau Sensor..." 
+                        class="w-full bg-slate-100 dark:bg-slate-950/40 p-3 pl-10 rounded-xl outline-none text-[10px] font-bold border border-slate-200 dark:border-transparent focus:border-blue-500 transition-all text-slate-800 dark:text-white">
+                    <span class="absolute left-3 top-3 opacity-40">🔍</span>
+                </div>
+                <button onclick="closeModal('viewTagModal')" class="p-3 glass rounded-full hover:rotate-90 transition-transform absolute -top-4 -right-4 md:static">✕</button>
             </div>
             
             <div class="max-h-[400px] overflow-y-auto custom-scrollbar pr-4">
                 <table class="w-full text-left">
-                    <thead class="sticky top-0 bg-white dark:bg-slate-900">
+                    <thead class="sticky top-0 bg-white dark:bg-slate-900 z-10">
                         <tr class="text-[10px] uppercase font-black text-slate-400 border-b border-slate-100 dark:border-slate-800">
                             <th class="p-4">Address</th>
                             <th class="p-4">Function</th>
@@ -157,12 +149,10 @@
     <div id="uploadModal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4">
         <div class="bg-white dark:bg-slate-800 w-full max-w-md p-10 rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-700">
             <h2 class="text-xl font-extrabold mb-8 flex items-center text-slate-800 dark:text-white"><span class="mr-4 p-3 bg-blue-500/10 rounded-2xl">📤</span> Upload Data</h2>
-            
             <div class="flex gap-2 mb-6 bg-slate-100 dark:bg-slate-900/50 p-1.5 rounded-2xl">
                 <button onclick="switchTab('tag')" id="tabTag" class="flex-1 py-3 rounded-xl text-[10px] font-black transition-all bg-blue-600 text-white">ADD TAG</button>
                 <button onclick="switchTab('machine')" id="tabMachine" class="flex-1 py-3 rounded-xl text-[10px] font-black transition-all text-slate-500">ADD MACHINE</button>
             </div>
-
             <div id="formTag" class="space-y-4">
                 <select id="selectMachine" class="w-full bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl outline-none text-sm font-bold border border-slate-200 dark:border-white/5 text-slate-800 dark:text-white"></select>
                 <div id="tagInputList" class="space-y-2">
@@ -173,7 +163,6 @@
                 </div>
                 <button onclick="addRow()" class="text-[10px] font-black text-blue-500 uppercase tracking-widest">+ Add Row</button>
             </div>
-
             <div id="formMachine" class="hidden space-y-4">
                 <input type="text" id="newMachineName" placeholder="Nama Mesin" class="w-full bg-slate-100 dark:bg-slate-900 p-4 rounded-2xl outline-none text-sm font-bold border border-slate-200 dark:border-white/5 text-slate-800 dark:text-white">
                 <div class="relative group h-32 w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900/30 overflow-hidden">
@@ -182,7 +171,6 @@
                     <img id="preview" class="hidden h-full w-full object-contain p-2">
                 </div>
             </div>
-
             <div class="flex gap-4 pt-8">
                 <button onclick="closeModal('uploadModal')" class="flex-1 py-4 rounded-2xl font-black bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-white text-[10px] uppercase">Batal</button>
                 <button onclick="submitData()" id="btnSave" class="flex-1 py-4 rounded-2xl font-black bg-blue-600 text-white text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">Simpan</button>
@@ -193,6 +181,7 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwtP1Pup8Ob1yCjNVd6rpkhFlxkgLnzapP53Sq8s-BM2cgYaUhFklJpwGnbw8C2_2Y6/exec";
         let GLOBAL_DATA = [];
+        let ACTIVE_MACHINE_ID = ""; // Menyimpan ID mesin yang sedang dibuka
         let base64Image = "";
 
         // AUTH & THEME
@@ -257,13 +246,34 @@
         }
 
         function viewTags(machineId) {
+            ACTIVE_MACHINE_ID = machineId;
             const machine = GLOBAL_DATA.find(m => m.id === machineId);
             document.getElementById('modalMachineTitle').innerText = machine.name;
-            const tbody = document.getElementById('tagTableBody');
+            document.getElementById('tagSearchInput').value = ""; // Reset search field tiap buka modal
             
             document.getElementById('deleteMachineBtn').onclick = () => deleteMachine(machineId, machine.name);
+            
+            renderTagsTable(machine.tags);
+            document.getElementById('viewTagModal').classList.remove('hidden');
+        }
 
-            const sortedTags = [...machine.tags].sort((a, b) => {
+        function filterTagsInternal() {
+            const q = document.getElementById('tagSearchInput').value.toLowerCase();
+            const machine = GLOBAL_DATA.find(m => m.id === ACTIVE_MACHINE_ID);
+            
+            const filtered = machine.tags.filter(t => 
+                t.address.toLowerCase().includes(q) || 
+                t.func.toLowerCase().includes(q)
+            );
+            
+            renderTagsTable(filtered);
+        }
+
+        function renderTagsTable(tags) {
+            const tbody = document.getElementById('tagTableBody');
+            
+            // Sorting tetap dipertahankan
+            const sortedTags = [...tags].sort((a, b) => {
                 return a.address.localeCompare(b.address, undefined, {
                     numeric: true,
                     sensitivity: 'base'
@@ -275,12 +285,10 @@
                     <td class="p-4 font-bold text-blue-600 dark:text-blue-400 italic text-[10px]">${t.address}</td>
                     <td class="p-4 uppercase font-bold text-slate-800 dark:text-slate-100 text-[10px]">${t.func}</td>
                     <td class="p-4 text-right">
-                        <button onclick="deleteTag('${machineId}', '${t.id}')" class="text-red-400 hover:text-red-500">🗑️</button>
+                        <button onclick="deleteTag('${ACTIVE_MACHINE_ID}', '${t.id}')" class="text-red-400 hover:text-red-500">🗑️</button>
                     </td>
                 </tr>
-            `).join('') : `<tr><td colspan="3" class="p-10 text-center opacity-30 italic text-[10px]">No Tags Found.</td></tr>`;
-            
-            document.getElementById('viewTagModal').classList.remove('hidden');
+            `).join('') : `<tr><td colspan="3" class="p-10 text-center opacity-30 italic text-[10px]">Data tidak ditemukan.</td></tr>`;
         }
 
         async function deleteMachine(mId, mName) {
@@ -293,12 +301,6 @@
             if (!confirm("Hapus tag ini?")) return;
             await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "deleteTag", machineFileId: mId, tagId: tId }) });
             location.reload();
-        }
-
-        function filterData() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = GLOBAL_DATA.filter(m => m.name.toLowerCase().includes(q) || m.tags.some(t => t.address.toLowerCase().includes(q) || t.func.toLowerCase().includes(q)));
-            renderDashboard(filtered);
         }
 
         function handleFileSelect(e) {
